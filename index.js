@@ -23,7 +23,9 @@ module.exports.errorLogger = function (opts) {
         obfuscatePlaceholder,
         genReqId = defaultGenReqId,
         levelFn = defaultLevelFn,
-        includesFn;
+        includesFn,
+        skipFn,
+        shouldSkip = false;
 
     if (opts.logger) {
       logger = opts.logger;
@@ -63,6 +65,10 @@ module.exports.errorLogger = function (opts) {
         delete opts.includesFn;
     }
 
+    if (opts.skipFn) {
+        skipFn = opts.skipFn;
+        delete opts.skipFn;
+    }
 
     if (opts.genReqId) {
         genReqId = typeof genReqId == 'function' ? opts.genReqId : defaultGenReqId;
@@ -71,6 +77,15 @@ module.exports.errorLogger = function (opts) {
     }
 
     return function (err, req, res, next) {
+        if (typeof skipFn === 'function') {
+            shouldSkip = skipFn(req, res);
+        }
+
+        if (shouldSkip) {
+            next();
+            return;
+        }
+
         var startTime = process.hrtime();
 
         var app = req.app || res.app;
@@ -185,7 +200,6 @@ module.exports.errorLogger = function (opts) {
                 logFn.call(childLogger, json, format(meta));
             }
         }
-
 
         if (immediate) {
             logging(true);

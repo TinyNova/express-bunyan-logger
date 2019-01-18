@@ -1,5 +1,8 @@
 # Express-bunyan-logger
 
+*NOTE* Forked from [villadora/express-bunyan-logger](https://github.com/villadora/express-bunyan-logger)
+Added in `skipFn` which the above lacked.
+
 A express logger middleware powered by [bunyan](https://github.com/trentm/node-bunyan).
 
 [![Build Status](https://travis-ci.org/villadora/express-bunyan-logger.svg?branch=master)](https://travis-ci.org/villadora/express-bunyan-logger) [![dependencies](https://david-dm.org/villadora/express-bunyan-logger.svg)](https://david-dm.org/villadora/express-bunyan-logger)
@@ -95,6 +98,17 @@ function(req, res) {
             name: req.user.name
         }
     }
+}
+```
+
+### options.skipFn
+
+Function that is passed `req` and `res`, and allows the ability to skip logging if the condition is met
+
+```javascript
+function(req, res) {
+    // Do not log health check from ELB-HealthChecker/2.0
+    return /^[ELB-]+/.test(req.headers['user-agent']);
 }
 ```
 

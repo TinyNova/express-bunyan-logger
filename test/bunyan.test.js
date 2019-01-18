@@ -5,7 +5,7 @@ var through = require('through2');
 var bunyanLogger = require('../');
 var util = require('util');
 
-
+var fs = require('fs');
 require('buffer');
 
 
@@ -47,6 +47,34 @@ describe('bunyan-logger', function() {
           assert(json.res && json.req);
           done();
         }
+      });
+  });
+
+  it('test skipping', function(done) {
+    var app = express();
+    var output = st();
+    app.use(bunyanLogger({
+      stream: output,
+      skipFn: function (req, res) {
+        return /^[ELB-]+/.test(req.headers['user-agent']);
+      }
+    }));
+
+    app.use(function(req, res, next) {
+      req.log.info('middleware');
+      next();
+    });
+
+    app.get('/', function(req, res) {
+      res.send('GET /');
+    });
+
+    request(app)
+      .get('/')
+      .set('user-agent', 'ELB-HealthChecker/2.0')
+      .expect('GET /', function(err, res) {
+        assert.equal(output.content, undefined);
+        done();
       });
   });
 
